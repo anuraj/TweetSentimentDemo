@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-table@1.18.3/dist/bootstrap-table.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <title>Social Media Monitoring</title>
+    <style>
+        .positive {
+            background-color: green;
+        }
+
+        .neutral {
+            background-color: lightblue;
+        }
+
+        .negative {
+            background-color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <h1 class="Display-2">Dashboard</h1>
+
+        </div>
+        <hr />
+        <div class="row">
+            <div class="col-4">
+                <canvas id="piechart"></canvas>
+            </div>
+            <div class="col-8">
+                <canvas id="barchart"></canvas>
+            </div>
+        </div>
+        <div class="row">
+            <table id="table" data-mobile-responsive="true" data-toggle="table" data-row-style="rowStyle"
+                data-pagination="true" data-page-size="10" data-pagination-parts="['pageInfo','pageList']"
+                data-single-select="true" data-click-to-select="true" data-buttons="buttons" data-search="true"
+                data-url="/api/data">
+                <thead>
+                    <tr>
+                        <th data-checkbox="true"></th>
+                        <th data-field="text">Tweet Text</th>
+                        <th data-field="screen_name">User</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/socket.io@4.0.1/client-dist/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap-table@1.18.3/dist/bootstrap-table.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        var socket = io();
+        socket.on('connect', function (data) {
+            console.log('connected');
+        });
+        socket.on('dashboardupdate', function (data) {
+            updateBarChart();
+            updatePieChart();
+            var $table = $('#table');
+            $table.bootstrapTable('refresh');
+        });
+        var buttons = function () {
+            return {
+                btnAdd: {
+                    text: 'Favorite the Tweet',
+                    icon: 'fa-heart',
+                    event: function () {
+                        alert('Do some stuff to e.g. add a new row')
+                    },
+                    attributes: {
+                        title: 'Favorite the Tweet'
+                    }
+                },
+                btnDirectMessage: {
+                    text: 'Send Direct Message to user',
+                    icon: 'fa-envelope',
+                    event: function () {
+                        alert('Do some stuff to e.g. add a new row')
+                    },
+                    attributes: {
+                        title: 'Send Direct Message to user'
+                    }
+                }
+            }
+        };
+        var rowStyle = function (row, index) {
+            return { classes: row.sentiment }
+        };
+        $(function () {
+            updateBarChart();
+            updatePieChart();
+        });
+
+        let pielabels = [];
+        let piedataset = [];
+        let ctx = document.querySelector('#piechart').getContext('2d');
+        const piedata = {
+            labels: pielabels,
+            datasets: [{
+                label: 'Tweets by Sentiment',
+                backgroundColor: [
+                    'red',
+                    'lightblue',
+                    'green'
+                ],
+                data: piedataset
+            }]
+        };
+        let piechart = new Chart(ctx, {
+            type: 'pie',
+            data: piedata,
+            options: {
+                onClick: (evt, item) => {
+                    alert(item[0].index);
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        var updatePieChart = function () {
+            $.getJSON("/api/piechartdata", (response) => {
+                piedataset.length = 0;
+                pielabels.length = 0;
+                for (let index = 0; index < response.length; index++) {
+                    const element = response[index];
+                    piedataset.push(element.TweetCount);
+                    pielabels.push(element.TweetSentiment);
+                }
+
+                piechart.update();
+            });
+        };
+
+        let barchartctx = document.querySelector('#barchart').getContext('2d');
+        let barchartlabels = [];
+        let barchartdataset = [];
+        const barchartdata = {
+            labels: barchartlabels,
+            datasets: [{
+                label: 'Tweets by User',
+                data: barchartdataset,
+                backgroundColor: ['blue']
+            }],
+            borderWidth: 1
+        };
+        let barchart = new Chart(barchartctx, {
+            type: 'bar',
+            data: barchartdata,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        var updateBarChart = function () {
+            $.getJSON("/api/barchartdata", (response) => {
+                barchartlabels.length = 0;
+                barchartdataset.length = 0;
+                for (let index = 0; index < response.length; index++) {
+                    const element = response[index];
+                    barchartlabels.push(element.TweetUser);
+                    barchartdataset.push(element.TweetCount);
+                }
+                barchart.update();
+            });
+        };
+    </script>
+
+</body>
+
+</html>

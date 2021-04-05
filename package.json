@@ -1,0 +1,25 @@
+{
+  "name": "tweetsentimentdemo",
+  "version": "1.0.0",
+  "description": "An app for twitter sentiment analysis",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "twitter",
+    "sentiment_analysis",
+    "azure"
+  ],
+  "author": "anuraj",
+  "license": "MIT",
+  "dependencies": {
+    "@azure/ai-text-analytics": "^5.0.1",
+    "@azure/cosmos": "^3.10.5",
+    "express": "^4.17.1",
+    "ms-teams-webhook": "^1.0.4",
+    "socket.io": "^4.0.1",
+    "twit": "^2.2.11"
+  }
+}
